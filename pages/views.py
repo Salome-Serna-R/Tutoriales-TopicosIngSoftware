@@ -5,6 +5,8 @@ from django.views.generic.edit import CreateView
 from django import forms
 from django.urls import reverse, reverse_lazy
 from django.core.validators import MinValueValidator
+
+from pages.utils import ImageLocalStorage
 from .models import Product
 
 
@@ -158,3 +160,32 @@ class CartRemoveAllView(View):
         if 'cart_product_data' in request.session:
             del request.session['cart_product_data']
         return redirect('cart_index')
+
+
+def ImageViewFactory(image_storage):
+    class ImageView(View):
+        template_name = 'images/index.html'
+
+        def get(self, request):
+            image_url = request.session.get('image_url', '')
+            return render(request, self.template_name, {'image_url': image_url})
+
+        def post(self, request):
+            image_url = image_storage.store(request)
+            request.session['image_url'] = image_url
+            return redirect('image_index')
+    return ImageView
+
+
+class ImageViewNoDI(View):
+    template_name = 'images/index.html'
+
+    def get(self, request):
+        image_url = request.session.get('image_url', '')
+        return render(request, self.template_name, {'image_url': image_url})
+
+    def post(self, request):
+        image_storage = ImageLocalStorage()
+        image_url = image_storage.store(request)
+        request.session['image_url'] = image_url
+        return redirect('image_index')
