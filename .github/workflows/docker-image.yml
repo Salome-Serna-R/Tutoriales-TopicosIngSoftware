@@ -2,19 +2,26 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Docker login
-        run: echo "${{ secrets.DOCKERHUB_PASS }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKER_PASS: ${{ secrets.DOCKERHUB_PASS }}
+        run: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASS
 
-      - name: Build Docker image
-        run: docker build . -t saloserna/express-randomquotes:latest
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag saloserna/express-randomquotes:latest
 
       - name: Push Docker image
         run: docker push saloserna/express-randomquotes:latest
